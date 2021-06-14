@@ -8,7 +8,6 @@ import Trending from "./Trending";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUserName } from "../features/User/userSlice";
-import db from "../firebase";
 import { setMovies } from "../features/Movie/movieSlice";
 
 const Home = (props) => {
@@ -20,32 +19,47 @@ const Home = (props) => {
   let newDisneys = [];
 
   useEffect(() => {
-    db.collection("movie").onSnapshot((snapshot) => {
-      snapshot.docs.map((doc) => {
-        switch (doc.data().type) {
-          case "recommend":
-            recommends = [...recommends, { id: doc.id, ...doc.data() }];
-            break;
-          case "original":
-            originals = [...originals, { id: doc.id, ...doc.data() }];
-            break;
-          case "new":
-            newDisneys = [...newDisneys, { id: doc.id, ...doc.data() }];
-            break;
-          case "trending":
-            trendings = [...trendings, { id: doc.id, ...doc.data() }];
-            break;
+    fetch(
+      "https://disneyplus.blob.core.windows.net/jsoncontainer/disneyPlusMoviesData.json",
+      {
+        method: "get",
+        headers: new Headers({
+          // Your header content
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        for (var key in res.movies) {
+          if (res.movies.hasOwnProperty(key)) {
+            switch (res.movies[key].type) {
+              case "recommend":
+                recommends = [...recommends, { id: key, ...res.movies[key] }];
+                break;
+              case "original":
+                originals = [...originals, { id: key, ...res.movies[key] }];
+                break;
+              case "new":
+                newDisneys = [...newDisneys, { id: key, ...res.movies[key] }];
+                break;
+              case "trending":
+                trendings = [...trendings, { id: key, ...res.movies[key] }];
+                break;
+            }
+          }
+          dispatch(
+            setMovies({
+              recommend: recommends,
+              newDisney: newDisneys,
+              trending: trendings,
+              original: originals,
+            })
+          );
         }
+      })
+      .catch((error) => {
+        console.log("Error getting document:", error);
       });
-      dispatch(
-        setMovies({
-          recommend: recommends,
-          newDisney: newDisneys,
-          trending: trendings,
-          original: originals,
-        })
-      );
-    });
   }, [userName]);
 
   return (

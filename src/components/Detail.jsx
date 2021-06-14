@@ -8,12 +8,20 @@ const Detail = (props) => {
   const [detailData, setDetailData] = useState({});
 
   useEffect(() => {
-    db.collection("movie")
-      .doc(id)
-      .get()
-      .then((doc) => {
-        if (doc.exists) {
-          setDetailData(doc.data());
+    fetch(
+      "https://disneyplus.blob.core.windows.net/jsoncontainer/disneyPlusMoviesData.json",
+      {
+        method: "get",
+        headers: new Headers({
+          // Your header content
+        }),
+      }
+    )
+      .then((res) => res.json())
+      .then((res) => {
+        var doc = res.movies[id];
+        if (doc) {
+          setDetailData(doc);
         } else {
           console.log("no such document in firebase 🔥");
         }
